@@ -829,6 +829,7 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
     unlabeled_mask = ~mask
     # NOTE: use your new helper bernoulli_entropy_from_logits() (see my previous message)
     train_entropy = float(bernoulli_entropy_from_logits(train_logits[unlabeled_mask]).numpy())
+    train_mean_entropy= mean_entropy(train_logits[unlabeled_mask])
     f1_entropy_train = f1_train - train_entropy
 
     # also report Bernoulli entropy from PROBS for reference (different definition)
@@ -1255,7 +1256,8 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
                     "adapt_binary_entropy": adapt_binary_entropy,
                     "optuna_score": optuna_score,
                     "train_balanced_accuracy_score":train_balanced_accuracy_score,
-                    "validation_balanced_accuracy_score":validation_balanced_accuracy_score
+                    "validation_balanced_accuracy_score":validation_balanced_accuracy_score,
+                    "train_mean_entropy":train_mean_entropy
 
 
 
