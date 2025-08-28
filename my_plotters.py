@@ -425,7 +425,7 @@ def evaluate_model_performance(probe_model, CIRS, LosLabels, save_plots,TEXT_lab
         plt.xlabel("Predicted P(NLOS)")
         plt.ylabel("Count")
         plt.legend()
-        plt.title("Test set probability distributions")
+        plt.title(f"{TEXT_label} set probability distributions")
         plt.savefig(f"{save_plots}/{TEXT_label}_set_probabilities.png")
 
       
@@ -436,5 +436,5 @@ def evaluate_model_performance(probe_model, CIRS, LosLabels, save_plots,TEXT_lab
         plt.xlabel("Predicted P(NLOS)")
         plt.ylabel("Count")
         plt.legend()
-        plt.title("Test set probability distributions")
+        plt.title(f"{TEXT_label} set probability distributions")
         plt.savefig(f"{save_plots}/{TEXT_label}_set_probabilities_scatter.png")

@@ -111,7 +111,7 @@ for DATASET_NAMES, TRAIN_SIZE in zip(dt_names, train_sizes):
         trial_dir = SAVE_PLOTS_ROOT / f"trial_{trial.number:03d}"
         trial_dir.mkdir(parents=True, exist_ok=True)
 
-        epochs = 3#trial.suggest_int("epochs", 40, 120)
+        epochs = trial.suggest_int("epochs", 40, 120)
 
         # Pseudo-labeling block (no duplicate 'focal_alpha')
         if enable_pseudo_labeling:
@@ -144,7 +144,7 @@ for DATASET_NAMES, TRAIN_SIZE in zip(dt_names, train_sizes):
         # Common hyperparams
         h.update(dict(
             AE_EPOCHS=epochs,
-            AE_BATCH=trial.suggest_categorical("AE_BATCH", [32, 64, 128, 256]),
+            AE_BATCH=trial.suggest_categorical("AE_BATCH", [16,32, 64, 128]),
             GRL_LAMBDA_MAX=trial.suggest_float("grl_lambda_max", 0.2, 2.0, step=0.1),
             FOCAL_GAMMA=trial.suggest_float("focal_gamma", 2.0, 3.5),
             FOCAL_ALPHA=trial.suggest_float("focal_alpha", 0.1, 0.9),
@@ -178,8 +178,10 @@ for DATASET_NAMES, TRAIN_SIZE in zip(dt_names, train_sizes):
             Plots_enabled=True,
             ADAPTION_WITH_LABEL=ADAPTION_WITH_LABEL,
             MIXED_PRECISION=USE_MIXED_PRECISION,
+            MICRO_BATCH=32,
             w  = trial.suggest_float("w_val_vs_margin", 0.4, 0.8) ,        # weight on val AUROC
             mu = trial.suggest_float("entropy_penalty_mu", 0.0, 0.3)      # tiny penalty strength
+
         ))
 
         ae_model, _, val_acc, f1_valid, cm_valid, training_time, f1ent,val_auroc, optuna_score = train_ae(
