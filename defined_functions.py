@@ -175,7 +175,7 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
     #selecting the device to run the algorithm 
     device = '/GPU:0' if tf.config.list_physical_devices('GPU') else '/CPU:0'
     #BFC_mean = BinaryFocalCrossentropy(gamma=h["FOCAL_GAMMA"], alpha=h["FOCAL_ALPHA"],from_logits=False, reduction='sum_over_batch_size')  
-    BFC_mean = BinaryFocalCrossentropy(gamma=2.0, alpha=0.25,from_logits=False, reduction='sum_over_batch_size')  
+    BFC_mean = BinaryFocalCrossentropy(gamma=h["FOCAL_GAMMA"],from_logits=False)  
 
     def reconstruction_loss(y_true, y_pred):
         raw = time_freq_log_loss(y_true, y_pred)        # (batch,) or (batch,features)
@@ -203,7 +203,7 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
             
         return _weighted_mean(per_sample, sw)
 
-    def los_loss(y_true, y_pred, sw):
+    """ def los_loss(y_true, y_pred, sw):
         # 1) build mask of “valid” entries (where sw != 0)
         sw     = tf.reshape(tf.cast(sw,     tf.float32), (-1,))
         mask = tf.not_equal(sw, 0)
@@ -213,7 +213,22 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
         pred_flat = tf.boolean_mask(y_pred, mask)
 
         return BFC_mean(y_flat, pred_flat)  
-        #return focal_tversky(y_flat, pred_flat)
+        #return focal_tversky(y_flat, pred_flat) """
+    def los_loss(y_true, y_pred, sw):
+            # 1) build mask of “valid” entries (where sw != 0)
+            mask = tf.not_equal(sw, 0)
+
+            # 2) flatten out only those valid entries
+            y_flat    = tf.boolean_mask(y_true, mask)
+            pred_flat = tf.boolean_mask(y_pred, mask)
+
+            # 3) compute BFC on that filtered data
+            #    — raw may be a scalar or a vector of per-sample/per-element scores
+            raw_BFC = BFC_mean(y_flat, pred_flat)
+
+            # 4) take the mean over whatever you got back
+            #    (if raw_tversky is scalar, this is a no-op)
+            return tf.reduce_mean(raw_BFC)
 
     if DEBUG:
         print(f"Using device: {device}")
@@ -346,7 +361,7 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
                 sw_dom_vec = tf.reshape(sw_dom, (-1,))                             # (B,)
                 sw_dom_eff = sw_dom_vec * per_dom_w * w_e                          # (B,)
 
-                if DEBUG:
+                """ if DEBUG:
                     print("Effective domain weights (first 20):", *sw_dom_eff.numpy()[:20])
                     print("g2: ",g2.numpy())
                     print("H: ",H.numpy())
@@ -360,7 +375,7 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
                     print("target_val: ",target_val.numpy())
                     print("y_dom: ",y_dom.numpy())
                     print("num_dom: ",num_dom)
-                    print("sw_dom_eff: ",sw_dom_eff.numpy())
+                    print("sw_dom_eff: ",sw_dom_eff.numpy()) """
 
                 Ld = domain_loss(y_dom, pred_dom, sw_dom_eff)
 

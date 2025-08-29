@@ -72,7 +72,7 @@ dt_names = [
     ["IOT", "Office", "TU"],
 ]
 train_sizes = [8000, 7000, 6500]
-enable_pseudo_labeling = True
+enable_pseudo_labeling = False
 
 for DATASET_NAMES, TRAIN_SIZE in zip(dt_names, train_sizes):
     SEED = 42
@@ -147,7 +147,7 @@ for DATASET_NAMES, TRAIN_SIZE in zip(dt_names, train_sizes):
             AE_BATCH=trial.suggest_categorical("AE_BATCH", [16,32, 64, 128]),
             GRL_LAMBDA_MAX=trial.suggest_float("grl_lambda_max", 0.2, 2.0, step=0.1),
             FOCAL_GAMMA=trial.suggest_float("focal_gamma", 2.0, 3.5),
-            FOCAL_ALPHA=trial.suggest_float("focal_alpha", 0.1, 0.9),
+          
             PL_DOMAIN_ID=2,
             ENC_CONST_COEF=trial.suggest_categorical("enc_const", [0.5, 1.0, 1.5, 2.0]),
             DEC_CONST_COEF=trial.suggest_categorical("dec_const", [0.5, 1.0, 1.5, 2.0]),
