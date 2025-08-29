@@ -385,7 +385,7 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
                 Lcons = tf.constant(0.0, tf.float32)
                 cons_w_mean = tf.constant(0.0, tf.float32)
 
-                if h["CONS_ENABLE"]:
+                if cons_lambda:
                     dom_ids = tf.argmax(y_dom, axis=-1, output_type=tf.int64)     # int64
                     mask_target = tf.equal(dom_ids, pl_domain_id)                  # (B,)
 
@@ -665,9 +665,11 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
             train_loss = tf.keras.metrics.Mean()
            # batch_num=0
             #temp_total=0.0
-
-            lam_cons = cons_lambda(epoch,h)  
-            batch_num = 0
+            if h["CONS_ENABLE"]:
+                lam_cons = cons_lambda(epoch,h) 
+            else:   
+                lam_cons=0  
+     
 
             for x, (y_rec, y_dom, y_los), (sw_rec, sw_dom, sw_los) in train_ds:
                 #batch_num += 1
