@@ -72,7 +72,7 @@ dt_names = [
     ["IOT", "Office", "TU"],
 ]
 train_sizes = [8000, 7000, 6500]
-enable_pseudo_labeling = False
+enable_pseudo_labeling = True
 
 for DATASET_NAMES, TRAIN_SIZE in zip(dt_names, train_sizes):
     SEED = 42
