@@ -174,8 +174,9 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
 
     #selecting the device to run the algorithm 
     device = '/GPU:0' if tf.config.list_physical_devices('GPU') else '/CPU:0'
-    BFC_mean = BinaryFocalCrossentropy(gamma=h["FOCAL_GAMMA"], alpha=h["FOCAL_ALPHA"],from_logits=False, reduction='sum_over_batch_size')  
-    
+    #BFC_mean = BinaryFocalCrossentropy(gamma=h["FOCAL_GAMMA"], alpha=h["FOCAL_ALPHA"],from_logits=False, reduction='sum_over_batch_size')  
+    BFC_mean = BinaryFocalCrossentropy(gamma=2.0, alpha=0.25,from_logits=False, reduction='sum_over_batch_size')  
+
     def reconstruction_loss(y_true, y_pred):
         raw = time_freq_log_loss(y_true, y_pred)        # (batch,) or (batch,features)
       
@@ -211,8 +212,8 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
         y_flat    = tf.boolean_mask(y_true, mask)
         pred_flat = tf.boolean_mask(y_pred, mask)
 
-        #return BFC_mean(y_flat, pred_flat)  
-        return focal_tversky(y_flat, pred_flat)
+        return BFC_mean(y_flat, pred_flat)  
+        #return focal_tversky(y_flat, pred_flat)
 
     if DEBUG:
         print(f"Using device: {device}")
@@ -932,6 +933,18 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
     
     validation_balanced_accuracy_score=balanced_accuracy_score(lv_filtered, preds_filtered)
     validation_focal_tversky = focal_tversky(lv_filtered, preds_filtered)
+    validation_binary_focal_crossentropy = tf.reduce_mean(
+        tf.keras.losses.binary_focal_crossentropy(
+            tf.cast(lv_filtered, tf.float32),
+            tf.cast(probs_filt, tf.float32),
+            apply_class_balancing=False,
+            alpha=h.get("FOCAL_ALPHA", 0.25),
+            gamma=h.get("FOCAL_GAMMA", 2.0),
+            from_logits=False,
+            label_smoothing=0.0,
+            axis=-1
+        )
+    )
     validation_weighted_bce_logits = weighted_bce_logits(
     tf.cast(lv_filtered, tf.float32),
     tf.cast(probs_filt, tf.float32)

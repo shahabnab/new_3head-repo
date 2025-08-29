@@ -111,7 +111,7 @@ for DATASET_NAMES, TRAIN_SIZE in zip(dt_names, train_sizes):
         trial_dir = SAVE_PLOTS_ROOT / f"trial_{trial.number:03d}"
         trial_dir.mkdir(parents=True, exist_ok=True)
 
-        epochs = 2#trial.suggest_int("epochs", 40, 120)
+        epochs = trial.suggest_int("epochs", 40, 120)
 
         # Pseudo-labeling block (no duplicate 'focal_alpha')
         if enable_pseudo_labeling:
