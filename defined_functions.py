@@ -211,8 +211,9 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
         y_flat    = tf.boolean_mask(y_true, mask)
         pred_flat = tf.boolean_mask(y_pred, mask)
 
-        return BFC_mean(y_flat, pred_flat)  
-   
+        #return BFC_mean(y_flat, pred_flat)  
+        return focal_tversky(y_flat, pred_flat)
+
     if DEBUG:
         print(f"Using device: {device}")
 
@@ -765,7 +766,7 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
                 name    = "los_only_model"
 
             )
-        los_model.compile(loss=BFC_mean , metrics=["accuracy"])
+        los_model.compile(loss=BFC_mean , metrics=["accuracy",tn])
         return los_model
     
     BFC_none = BinaryFocalCrossentropy(
@@ -854,7 +855,11 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
     train_tn = tn(ltr_filtered, preds_filt)
     train_balanced_accuracy_score=balanced_accuracy_score(ltr_filtered, preds_filt)
     train_focal_tversky = focal_tversky(ltr_filtered, preds_filt)
-    
+    train_weighted_bce_logits = weighted_bce_logits(
+        tf.cast(ltr_filtered, tf.float32),
+        tf.cast(probs_filt, tf.float32)
+    )
+
     # focal cross-entropy: use probabilities, read alpha/gamma from h if present
     train_binary_focal_crossentropy = tf.reduce_mean(
         tf.keras.losses.binary_focal_crossentropy(
@@ -927,10 +932,11 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
     
     validation_balanced_accuracy_score=balanced_accuracy_score(lv_filtered, preds_filtered)
     validation_focal_tversky = focal_tversky(lv_filtered, preds_filtered)
-    validation_binary_focal_crossentropy = tf.reduce_mean(BFC_none(
+    validation_weighted_bce_logits = weighted_bce_logits(
     tf.cast(lv_filtered, tf.float32),
     tf.cast(probs_filt, tf.float32)
-))
+)
+    
    
 
 
@@ -1242,7 +1248,6 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
                     "validation_tn": validation_tn.numpy().item(),
                     "validation_focal_tversky": validation_focal_tversky.numpy().item(),
                     "validation_binary_focal_crossentropy": validation_binary_focal_crossentropy.numpy().item(),
-
                     "train_binary_entropy": train_binary_entropy,
                     "train_dsc": train_dsc.numpy().item(),
                     "train_dice_loss": train_dice_loss.numpy().item(),
@@ -1257,7 +1262,9 @@ def train_ae(balanced_dsets, CIRS,RNG, Domains, Weights, LosLabels, h, trial=Non
                     "optuna_score": optuna_score,
                     "train_balanced_accuracy_score":train_balanced_accuracy_score,
                     "validation_balanced_accuracy_score":validation_balanced_accuracy_score,
-                    "train_mean_entropy":train_mean_entropy
+                    "train_mean_entropy":train_mean_entropy,
+                    "train_weighted_bce_logits": train_weighted_bce_logits,
+                    "validation_weighted_bce_logits": validation_weighted_bce_logits
 
 
 

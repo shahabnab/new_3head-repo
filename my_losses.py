@@ -67,24 +67,33 @@ def tn(y_true, y_pred):
     tn = (K.sum(y_neg * y_pred_neg) + smooth) / (K.sum(y_neg) + smooth )
     return tn 
 
-def tverskyy(y_true, y_pred):
+
+
+# Standard Tversky (positive class = 1)
+def tversky(y_true, y_prob, alpha=0.7, beta=0.3, smooth=1e-6):
     y_true = tf.cast(y_true, tf.float32)
-    y_pred = tf.cast(y_pred, tf.float32)
-    y_true_pos = K.flatten(y_true)
-    y_pred_pos = K.flatten(y_pred)
-    true_pos = K.sum(y_true_pos * y_pred_pos)
-    false_neg = K.sum(y_true_pos * (1-y_pred_pos))
-    false_pos = K.sum((1-y_true_pos)*y_pred_pos)
-    alpha = 0.7
-    return (true_pos + smooth)/(true_pos + alpha*false_neg + (1-alpha)*false_pos + smooth)
+    y_prob = tf.cast(y_prob, tf.float32)      # y_prob must be in [0,1]
+    y_true = tf.reshape(y_true, [-1])
+    y_prob = tf.reshape(y_prob, [-1])
 
-def tversky_loss(y_true, y_pred):
-    return 1 - tverskyy(y_true,y_pred)
+    tp = tf.reduce_sum(y_true * y_prob)
+    fn = tf.reduce_sum(y_true * (1.0 - y_prob))
+    fp = tf.reduce_sum((1.0 - y_true) * y_prob)
 
-def focal_tversky(y_true,y_pred):
-    pt_1 = tverskyy(y_true, y_pred)
-    gamma = 0.75
-    return K.pow((1-pt_1), gamma)
+    return (tp + smooth) / (tp + alpha*fn + beta*fp + smooth)
+
+def tversky_loss(y_true, y_prob, alpha=0.7, beta=0.3, smooth=1e-6):
+    return 1.0 - tversky(y_true, y_prob, alpha, beta, smooth)
+
+def focal_tversky(y_true, y_prob, alpha=0.7, beta=0.3, gamma=0.75, smooth=1e-6):
+    ti = tversky(y_true, y_prob, alpha, beta, smooth)
+    return tf.pow(1.0 - ti, gamma)
+
+def weighted_bce_logits(y_true, logits, w0=3.0, w1=1.0):
+    y = tf.cast(y_true, tf.float32)
+    ce = tf.nn.sigmoid_cross_entropy_with_logits(labels=y, logits=logits)
+    w = y*w1 + (1.0 - y)*w0    # LOS (0) gets w0
+    return tf.reduce_mean(w * ce)
 
 @tf.function
 def strong_aug(x, noise_std, gain_jitter):
